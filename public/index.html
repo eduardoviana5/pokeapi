@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pokédex Explorer</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>Pokédex Explorer</h1>
+    <form id="search-form">
+      <label for="search-input" class="sr-only">Nome ou número do Pokémon</label>
+      <input id="search-input" type="text" placeholder="Ex.: pikachu ou 25" required />
+      <button type="submit">Buscar</button>
+      <button type="button" id="random-btn">Aleatório</button>
+    </form>
+  </header>
+
+  <main>
+    <div id="status-msg" role="alert"></div>
+
+    <section id="detail-section" class="card hidden"></section>
+
+    <section id="compare-section" class="card hidden">
+      <h2>Comparação de Pokémon</h2>
+      <div id="compare-grid" class="compare-grid"></div>
+      <button id="clear-compare">Limpar Comparação</button>
+    </section>
+
+    <section class="card">
+      <h2>Favoritos (<span id="fav-count">0</span>)</h2>
+      <div id="favorites-list" class="mini-grid"></div>
+    </section>
+
+    <section class="card">
+      <div class="toolbar">
+        <h2>Catálogo</h2>
+        <div class="filters">
+          <button class="filter-btn active" data-type="all">Todos</button>
+          <button class="filter-btn" data-type="fire">Fogo</button>
+          <button class="filter-btn" data-type="water">Água</button>
+          <button class="filter-btn" data-type="grass">Planta</button>
+        </div>
+      </div>
+
+      <div id="catalog-grid" class="grid"></div>
+
+      <div id="pagination" class="pagination">
+        <button id="prev-page">Anterior</button>
+        <span id="page-info">Página 1</span>
+        <button id="next-page">Próxima</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
