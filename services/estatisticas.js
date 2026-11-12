@@ -1,72 +1,106 @@
 const express = require('express');
 const app = express();
 const PORT = 3002;
+const POKEAPI_BASE = 'https://pokeapi.co/api/v2';
 
 const cache = new Map();
 
-async function fetchJson(url) {
-  if (cache.has(url)) return cache.get(url);
-  const res = await fetch(url);
-  if (!res.ok) throw { status: res.status };
-  const data = await res.json();
-  cache.set(url, data);
-  return data;
+function extractIdFromUrl(url) {
+  const parts = url.split('/').filter(Boolean);
+  return Number(parts[parts.length - 1]);
 }
 
-function extrairEvolucoes(chain) {
-  const lista = [];
-  let atual = chain;
-  while (atual) {
-    const id = atual.species.url.split('/').filter(Boolean).pop();
-    lista.push({
-      id: Number(id),
-      name: atual.species.name,
-      image: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`
-    });
-    atual = atual.evolves_to[0];
+function getOfficialArtwork(id) {
+  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
+}
+
+function flattenEvolutionChain(chainNode, list = []) {
+  const id = extractIdFromUrl(chainNode.species.url);
+  list.push({
+    id,
+    name: chainNode.species.name,
+    image: getOfficialArtwork(id)
+  });
+  for (const next of chainNode.evolves_to || []) {
+    flattenEvolutionChain(next, list);
   }
-  return lista;
+  return list;
+}
+
+async function traduzirParaPtBr(texto) {
+  if (!texto) return 'Descrição indisponível.';
+  try {
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(texto)}&langpair=en|pt-BR`;
+    const res = await fetch(url);
+    if (!res.ok) return texto;
+    const data = await res.json();
+    const traduzido = data?.responseData?.translatedText;
+    return traduzido && !traduzido.includes('MYMEMORY WARNING') ? traduzido : texto;
+  } catch {
+    return texto;
+  }
 }
 
 app.get('/pokemon/:termo', async (req, res) => {
   try {
     const termo = req.params.termo.toLowerCase().trim();
-    const p = await fetchJson(`https://pokeapi.co/api/v2/pokemon/${termo}`);
+    if (cache.has(termo)) {
+      return res.json(cache.get(termo));
+    }
 
-    let descricao = 'Descrição não disponível.';
+    const pokeRes = await fetch(`${POKEAPI_BASE}/pokemon/${encodeURIComponent(termo)}`);
+    if (!pokeRes.ok) {
+      return res.status(404).json({ erro: 'Pokémon não encontrado.' });
+    }
+    const pokemon = await pokeRes.json();
+
+    const speciesRes = await fetch(pokemon.species.url);
+    const species = speciesRes.ok ? await speciesRes.json() : null;
+
     let evolucoes = [];
-    try {
-      const species = await fetchJson(p.species.url);
-      const entry = species.flavor_text_entries.find((e) => e.language.name === 'en');
-      if (entry) descricao = entry.flavor_text.replace(/\f|\n/g, ' ');
-      const evoData = await fetchJson(species.evolution_chain.url);
-      evolucoes = extrairEvolucoes(evoData.chain);
-    } catch (_) {}
+    if (species?.evolution_chain?.url) {
+      const evoRes = await fetch(species.evolution_chain.url);
+      if (evoRes.ok) {
+        const evoData = await evoRes.json();
+        evolucoes = flattenEvolutionChain(evoData.chain);
+      }
+    }
 
-    res.json({
-      id: p.id,
-      name: p.name,
-      image: p.sprites.other['official-artwork'].front_default || p.sprites.front_default,
-      types: p.types.map((t) => t.type.name),
-      heightMeters: (p.height / 10).toFixed(1),
-      weightKg: (p.weight / 10).toFixed(1),
-      abilities: p.abilities.map((a) => ({
+    const flavorEntry = species?.flavor_text_entries?.find(f => f.language.name === 'en');
+    const descricaoIngles = flavorEntry
+      ? flavorEntry.flavor_text.replace(/[\n\f\r]/g, ' ')
+      : '';
+    const descricao = await traduzirParaPtBr(descricaoIngles);
+
+    const resultado = {
+      id: pokemon.id,
+      name: pokemon.name,
+      image: getOfficialArtwork(pokemon.id),
+      heightMeters: pokemon.height / 10,
+      weightKg: pokemon.weight / 10,
+      types: pokemon.types.map(t => t.type.name),
+      abilities: pokemon.abilities.map(a => ({
         name: a.ability.name,
         hidden: a.is_hidden
       })),
-      stats: p.stats.map((s) => ({
+      stats: pokemon.stats.map(s => ({
         name: s.stat.name,
         value: s.base_stat
       })),
       descricao,
       evolucoes
-    });
+    };
+
+    cache.set(termo, resultado);
+    cache.set(String(pokemon.id), resultado);
+    cache.set(pokemon.name.toLowerCase(), resultado);
+
+    res.json(resultado);
   } catch (err) {
-    if (err.status === 404) {
-      return res.status(404).json({ erro: 'Pokémon não encontrado.' });
-    }
-    res.status(502).json({ erro: 'Falha ao consultar a PokéAPI.' });
+    res.status(500).json({ erro: 'Erro interno ao buscar detalhes do Pokémon.' });
   }
 });
 
-app.listen(PORT, () => console.log(`[Estatísticas] Rodando na porta ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`[Serviço Estatísticas] rodando na porta ${PORT}`);
+});

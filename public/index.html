@@ -1,59 +1,178 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pokédex Explorer</title>
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-  <header>
-    <h1>Pokédex Explorer</h1>
-    <form id="search-form">
-      <label for="search-input" class="sr-only">Nome ou número do Pokémon</label>
-      <input id="search-input" type="text" placeholder="Ex.: pikachu ou 25" required />
-      <button type="submit">Buscar</button>
-      <button type="button" id="random-btn">Aleatório</button>
-    </form>
-  </header>
+  <!DOCTYPE html>
+  <html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PokeDex — Explorer & Arena</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a href="#" class="brand" onclick="ativarAba('catalogo'); return false;">
+          <span class="brand-text">
+            P<span class="pokeball-o" aria-hidden="true"></span>ke<span class="brand-accent">Dex</span>
+          </span>
+        </a>
 
-  <main>
-    <div id="status-msg" role="alert"></div>
+        <!-- ABAS PRINCIPAIS ESTILIZADAS -->
+      <nav class="main-tabs" aria-label="Navegação principal">
+        <button type="button" class="nav-pill active" data-tab="catalogo" onclick="alternarAba('catalogo')">
+          <span class="nav-icon">📖</span>
+          <span>Catálogo</span>
+        </button>
+        <button type="button" class="nav-pill" data-tab="favoritos" onclick="alternarAba('favoritos')">
+          <span class="nav-icon">⭐</span>
+          <span>Favoritos</span>
+          <span class="nav-badge" id="fav-count">0</span>
+        </button>
+        <button type="button" class="nav-pill" data-tab="batalha" onclick="alternarAba('batalha')">
+          <span class="nav-icon">⚔️</span>
+          <span>Campo de Batalha</span>
+          <span class="nav-badge battle-badge hidden" id="battle-count">0/2</span>
+        </button>
+      </nav>
 
-    <section id="detail-section" class="card hidden"></section>
+        <form id="search-form" class="search-bar">
+          <label for="search-input" class="sr-only">Nome ou número do Pokémon</label>
+          <input id="search-input" type="text" placeholder="Buscar nome ou nº (ex: gengar, 94)..." required />
+          <button type="submit" class="btn btn-primary">Buscar</button>
+          <button type="button" id="random-btn" class="btn btn-outline">Aleatório</button>
+        </form>
+      </div>
+    </header>
 
-    <section id="compare-section" class="card hidden">
-      <h2>Comparação de Pokémon</h2>
-      <div id="compare-grid" class="compare-grid"></div>
-      <button id="clear-compare">Limpar Comparação</button>
-    </section>
+    <main class="container">
+      <div id="status-msg" role="alert"></div>
 
-    <section class="card">
-      <h2>Favoritos (<span id="fav-count">0</span>)</h2>
-      <div id="favorites-list" class="mini-grid"></div>
-    </section>
+      <!-- DETALHES DO POKÉMON (SOBREPOSTO NO TOPO QUANDO ABERTO) -->
+      <section id="detail-section" class="card hidden"></section>
 
-    <section class="card">
-      <div class="toolbar">
-        <h2>Catálogo</h2>
-        <div class="filters">
-          <button class="filter-btn active" data-type="all">Todos</button>
-          <button class="filter-btn" data-type="fire">Fogo</button>
-          <button class="filter-btn" data-type="water">Água</button>
-          <button class="filter-btn" data-type="grass">Planta</button>
+      <!-- COMPARAÇÃO -->
+      <section id="compare-section" class="card hidden">
+        <div class="section-header">
+          <h2>Comparação Lado a Lado</h2>
+          <button id="clear-compare" class="btn btn-ghost btn-sm">Limpar</button>
         </div>
-      </div>
+        <div id="compare-grid" class="compare-grid"></div>
+      </section>
 
-      <div id="catalog-grid" class="grid"></div>
+      <!-- ABA 1: CATÁLOGO -->
+      <section id="tab-catalogo" class="tab-panel card">
+        <div class="toolbar">
+          <h2>Catálogo PokeDex</h2>
+          <div class="filters">
+            <button class="filter-btn active" data-type="all">Todos</button>
+            <button class="filter-btn" data-type="normal">Normal</button>
+            <button class="filter-btn" data-type="fire">Fogo</button>
+            <button class="filter-btn" data-type="water">Água</button>
+            <button class="filter-btn" data-type="grass">Planta</button>
+            <button class="filter-btn" data-type="electric">Elétrico</button>
+            <button class="filter-btn" data-type="ice">Gelo</button>
+            <button class="filter-btn" data-type="fighting">Lutador</button>
+            <button class="filter-btn" data-type="poison">Venenoso</button>
+            <button class="filter-btn" data-type="ground">Terra</button>
+            <button class="filter-btn" data-type="flying">Voador</button>
+            <button class="filter-btn" data-type="psychic">Psíquico</button>
+            <button class="filter-btn" data-type="bug">Inseto</button>
+            <button class="filter-btn" data-type="rock">Pedra</button>
+            <button class="filter-btn" data-type="ghost">Fantasma</button>
+            <button class="filter-btn" data-type="dragon">Dragão</button>
+            <button class="filter-btn" data-type="dark">Sombrio</button>
+            <button class="filter-btn" data-type="steel">Aço</button>
+            <button class="filter-btn" data-type="fairy">Fada</button>
+          </div>
+        </div>
 
-      <div id="pagination" class="pagination">
-        <button id="prev-page">Anterior</button>
-        <span id="page-info">Página 1</span>
-        <button id="next-page">Próxima</button>
-      </div>
-    </section>
-  </main>
+        <div id="catalog-grid" class="grid"></div>
 
-  <script src="app.js"></script>
-</body>
-</html>
+        <div id="pagination" class="pagination">
+          <button id="prev-page" class="btn btn-outline">← Anterior</button>
+          <span id="page-info" class="page-badge">Página 1</span>
+          <button id="next-page" class="btn btn-outline">Próxima →</button>
+        </div>
+      </section>
+
+      <!-- ABA 2: FAVORITOS -->
+      <section id="tab-favoritos" class="tab-panel card hidden">
+        <div class="section-header">
+          <h2>Meus Favoritos <span class="count-pill" id="fav-count">0</span></h2>
+          <button class="btn btn-outline btn-sm" onclick="ativarAba('catalogo')">+ Explorar Catálogo</button>
+        </div>
+        <div id="favorites-list" class="grid"></div>
+      </section>
+
+      <!-- ABA 3: CAMPO DE BATALHA -->
+      <section id="tab-batalha" class="tab-panel card battle-card hidden">
+        <div class="section-header">
+          <div class="title-with-dot">
+            <span class="red-dot"></span>
+            <h2>Campo de Batalha</h2>
+          </div>
+          <<button type="button" id="reset-battle" class="btn btn-reset-arena">🔄 Reiniciar Seleção</button>
+        </div>
+
+        <div id="battle-setup" class="battle-setup">
+          <p class="muted-text">Pesquise o nome ou número nos espaços abaixo, escolha pelo catálogo clicando em <strong>"⚔️ Lutar"</strong> ou inicie um duelo aleatório:</p>
+          <div class="battle-slots">
+            <div id="slot-1" class="fighter-slot empty"></div>
+            <span class="vs-badge">VS</span>
+            <div id="slot-2" class="fighter-slot empty"></div>
+          </div>
+          <div class="battle-setup-actions">
+            <button id="start-battle-btn" class="btn btn-primary" disabled>Iniciar Combate</button>
+            <button id="quick-battle-btn" class="btn btn-secondary">Batalha Aleatória Rápida</button>
+          </div>
+        </div>
+
+        <div id="battle-arena" class="battle-arena hidden">
+          <div class="stadium">
+            <div class="combatant opponent-side">
+              <div class="hud-box">
+                <div class="hud-top">
+                  <strong id="p2-name">Oponente</strong>
+                  <span id="p2-lv" class="lv-tag">Nv. 50</span>
+                </div>
+                <div class="hp-bar-outer">
+                  <div id="p2-hp-bar" class="hp-bar-inner" style="width: 100%"></div>
+                </div>
+                <div class="hp-text"><span id="p2-hp-num">100</span> / <span id="p2-hp-max">100</span> HP</div>
+              </div>
+              <div class="sprite-stage">
+                <img id="p2-sprite" src="" alt="Oponente" class="battle-sprite" />
+                <div class="platform-shadow"></div>
+              </div>
+            </div>
+
+            <div class="combatant player-side">
+              <div class="sprite-stage">
+                <img id="p1-sprite" src="" alt="Seu Pokémon" class="battle-sprite" />
+                <div class="platform-shadow"></div>
+              </div>
+              <div class="hud-box">
+                <div class="hud-top">
+                  <strong id="p1-name">Seu Pokémon</strong>
+                  <span id="p1-lv" class="lv-tag">Nv. 50</span>
+                </div>
+                <div class="hp-bar-outer">
+                  <div id="p1-hp-bar" class="hp-bar-inner" style="width: 100%"></div>
+                </div>
+                <div class="hp-text"><span id="p1-hp-num">100</span> / <span id="p1-hp-max">100</span> HP</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="battle-console">
+            <div id="battle-log" class="battle-log">O combate vai começar!</div>
+            <div id="battle-moves" class="battle-moves"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+  </html>
